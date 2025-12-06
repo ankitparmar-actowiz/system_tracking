@@ -1,9 +1,14 @@
 # database.py
 from pymongo import MongoClient, ASCENDING
-import bcrypt, os
+import bcrypt
+import os
+from datetime import datetime
 
-# client = MongoClient("mongodb://localhost:27017/")
-MONGO_URI = os.environ.get("MONGO_URI")
+# ------------------ MongoDB Connection ------------------
+MONGO_URI = os.environ.get("MONGO_URI")  # Make sure this is set in Vercel environment
+if not MONGO_URI:
+    raise Exception("MONGO_URI environment variable not set!")
+
 client = MongoClient(MONGO_URI)
 db = client["system_tracking_fastapi"]
 
@@ -14,28 +19,12 @@ logs_col = db["usage_logs"]
 contributors_col = db["contributors"]
 sessions_col = db["sessions"]
 
-# systems_col.create_index(["ip"], unique=True)
-
-# active_col.create_index([
-#     ("ip", ASCENDING),
-#     ("user", ASCENDING),
-#     ("project", ASCENDING)
-# ], unique=True)
-
-# contributors_col.create_index([
-#     ("main_ip", ASCENDING),
-#     ("main_user", ASCENDING),
-#     ("contributor", ASCENDING),
-#     ("project", ASCENDING)
-# ], unique=True)
-
+# ------------------ Helper Functions ------------------
 def hash_password(password: str) -> bytes:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
 
-
 def check_password(password: str, hashed: bytes) -> bool:
     return bcrypt.checkpw(password.encode('utf-8'), hashed)
-
 
 def create_user(name: str, email: str, password: str, role="user"):
     hashed = hash_password(password)
@@ -45,25 +34,25 @@ def create_user(name: str, email: str, password: str, role="user"):
             "email": email,
             "password": hashed,
             "role": role,
+            "created_at": datetime.now()
         })
         return True
     except Exception as e:
-        print(f"Error creating user: {e}")
+        print(f"[DB ERROR] create_user: {e}")
         return False
 
-def user_exists(email: str):
-    return users_col.find_one({"email": email})
-# client = MongoClient("mongodb+srv://ankitparmaractowiz_db_user:M3bjZ3RWX2F5ACdd@systemtrackingapp.4egtw8y.mongodb.net/")
-
+def user_exists(email: str) -> bool:
+    try:
+        return users_col.find_one({"email": email}) is not None
+    except Exception as e:
+        print(f"[DB ERROR] user_exists: {e}")
+        return False
 
 def login_user(email: str, password: str):
-    user = users_col.find_one({"email": email})
-    if user and check_password(password, user["password"]):
-        return {"name": user["name"], "email": user["email"], "role": user["role"]}
-
+    try:
+        user = users_col.find_one({"email": email})
+        if user and check_password(password, user["password"]):
+            return {"name": user["name"], "email": user["email"], "role": user["role"]}
+    except Exception as e:
+        print(f"[DB ERROR] login_user: {e}")
     return None
-
-
-
-
-
