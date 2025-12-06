@@ -13,20 +13,20 @@ logs_col = db["usage_logs"]
 contributors_col = db["contributors"]
 sessions_col = db["sessions"]
 
-systems_col.create_index(["ip"], unique=True)
+# systems_col.create_index(["ip"], unique=True)
 
-active_col.create_index([
-    ("ip", ASCENDING),
-    ("user", ASCENDING),
-    ("project", ASCENDING)
-], unique=True)
+# active_col.create_index([
+#     ("ip", ASCENDING),
+#     ("user", ASCENDING),
+#     ("project", ASCENDING)
+# ], unique=True)
 
-contributors_col.create_index([
-    ("main_ip", ASCENDING),
-    ("main_user", ASCENDING),
-    ("contributor", ASCENDING),
-    ("project", ASCENDING)
-], unique=True)
+# contributors_col.create_index([
+#     ("main_ip", ASCENDING),
+#     ("main_user", ASCENDING),
+#     ("contributor", ASCENDING),
+#     ("project", ASCENDING)
+# ], unique=True)
 
 def hash_password(password: str) -> bytes:
     return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
@@ -57,3 +57,4 @@ def login_user(email: str, password: str):
         return {"name": user["name"], "email": user["email"], "role": user["role"]}
 
     return None
+
