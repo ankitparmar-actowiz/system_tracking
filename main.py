@@ -77,7 +77,7 @@ async def register_submit(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
-    password: str = Form(...)
+    password: str = Form(...),
 ):
     if not name.strip() or not email.strip() or len(password) < 5:
         return templates.TemplateResponse("register.html", {
@@ -93,15 +93,8 @@ async def register_submit(
 
     create_user(name, email, password)
 
-    response = templates.TemplateResponse("register.html", {
-            "request": request,
-            "success": f"Account Created Successfully!"
-        })
-
-    await asyncio.sleep(1)
-
-    response.headers["HX-Redirect"] = "/login?message=Account created! Please log in.&msg_type=success"
-    return response
+    # Use normal redirect instead of HX-Redirect
+    return RedirectResponse("/login?message=Account created! Please log in.", status_code=302)
 
 @app.get("/login")
 async def login_page(request: Request):
@@ -409,4 +402,5 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
