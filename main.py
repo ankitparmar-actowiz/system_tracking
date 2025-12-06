@@ -21,6 +21,15 @@ templates = Jinja2Templates(directory="templates")
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 COOKIE_NAME = "auth_session"
+from fastapi.middleware.cors import CORSMiddleware
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # ---------------- Helper functions ----------------
 def validate_ip(ip: str) -> bool:
@@ -382,15 +391,3 @@ async def promote_user(request: Request, email: str = Form(...), role: str = For
         users_col.update_one({"email": email}, {"$set": {"role": role}})
         return htmx_toast_response(f"{email} promoted as {role}!", "success")
     return htmx_toast_response(f"Invalid role for {email}", "error")
-
-from fastapi.middleware.cors import CORSMiddleware
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-
