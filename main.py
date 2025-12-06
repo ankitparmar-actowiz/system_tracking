@@ -413,7 +413,3 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-from mangum import Mangum
-handler = Mangum(app)
-
