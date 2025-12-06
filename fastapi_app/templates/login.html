@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Login</title>
+  <link rel="stylesheet" href="/static/style.css" />
+</head>
+<body class="login-body">
+  <div class="login-container">
+    <h2>🔐 Login</h2>
+
+    {% if error %}
+      <div class="alert">{{ error }}</div>
+    {% endif %}
+
+    <form method="POST">
+      <input type="email" name="email" placeholder="📧 Email" required />
+      <input type="password" name="password" placeholder="🔑 Password" required />
+      <button type="submit">➡️ Login</button>
+    </form>
+
+    <p>Don't have an account? <a href="/register">Register here</a></p>
+  </div>
+</body>
+</html>

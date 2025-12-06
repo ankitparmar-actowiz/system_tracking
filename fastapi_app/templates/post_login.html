@@ -1,0 +1,13 @@
+<!-- templates/post_login.html -->
+<!DOCTYPE html>
+<html>
+<head><title>Login Success</title></head>
+<body>
+  <h2>✅ Logged in successfully! Closing...</h2>
+  <script>
+    // Notify parent window (Streamlit) that login succeeded
+    window.opener.postMessage("login_success", "http://localhost:8501");
+    window.close();
+  </script>
+</body>
+</html>
