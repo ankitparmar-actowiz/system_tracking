@@ -2,7 +2,8 @@
 from pymongo import MongoClient, ASCENDING
 import bcrypt
 
-client = MongoClient("mongodb://localhost:27017/")
+# client = MongoClient("mongodb://localhost:27017/")
+client = MongoClient("mongodb+srv://ankitparmaractowiz_db_user:M3bjZ3RWX2F5ACdd@systemtrackingapp.4egtw8y.mongodb.net/")
 db = client["system_tracking_fastapi"]
 
 users_col = db["users"]
@@ -54,4 +55,5 @@ def login_user(email: str, password: str):
     user = users_col.find_one({"email": email})
     if user and check_password(password, user["password"]):
         return {"name": user["name"], "email": user["email"], "role": user["role"]}
+
     return None
