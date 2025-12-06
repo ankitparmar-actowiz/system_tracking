@@ -400,6 +400,9 @@ async def promote_user(request: Request, email: str = Form(...), role: str = For
         return htmx_toast_response(f"{email} promoted as {role}!", "success")
     return htmx_toast_response(f"Invalid role for {email}", "error")
 
+@app.get("/")
+async def root():
+    return {"message": "Hello Vercel"}
 
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -413,3 +416,4 @@ app.add_middleware(
 
 from mangum import Mangum
 handler = Mangum(app)
+
