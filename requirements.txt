@@ -5,3 +5,4 @@ python-multipart
 pymongo
 bcrypt
 dnspython
+os
