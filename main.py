@@ -3,10 +3,11 @@ from fastapi import FastAPI, Request, Response, Depends, Form, HTTPException
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, Response as FastAPIResponse
+from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime, timedelta
 import secrets
-import asyncio
 import re
+import asyncio
 
 from database import (
     users_col, systems_col, active_col,
@@ -21,6 +22,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 
 COOKIE_NAME = "auth_session"
 
+# ---------------- Helper functions ----------------
 def validate_ip(ip: str) -> bool:
     parts = ip.split(".")
     if len(parts) != 4:
@@ -30,14 +32,12 @@ def validate_ip(ip: str) -> bool:
     except ValueError:
         return False
 
-
 def validate_hours(h: str):
     try:
         val = float(h)
         return val if val > 0 else None
     except:
         return None
-
 
 def get_current_user(request: Request):
     token = request.cookies.get(COOKIE_NAME)
@@ -49,35 +49,29 @@ def get_current_user(request: Request):
     user = users_col.find_one({"email": session["email"]}, {"_id": 0, "password": 0})
     return user if user else None
 
-
-# ===== Helper: HTMX response with toast =====
 def htmx_toast_response(message: str, msg_type: str = "success"):
-    """Return 204 with HX-Trigger to show toast. Emojis are NOT allowed (headers must be Latin-1)."""
-    # Optional: strip non-ASCII to be 100% safe
+    """Return 204 with HX-Trigger safely for serverless."""
     safe_message = re.sub(r'[^\x00-\x7F]+', '', message)
     headers = {
         "HX-Trigger": f'{{"showNotification": {{"message": "{safe_message}", "type": "{msg_type}"}}}}'
     }
     return FastAPIResponse(status_code=204, headers=headers)
 
-
-# ===== Routes =====
+# ---------------- Routes ----------------
 @app.get("/")
 async def home(request: Request, user=Depends(get_current_user)):
     return RedirectResponse("/dashboard" if user else "/login")
 
-
 @app.get("/register")
 async def register_page(request: Request):
     return templates.TemplateResponse("register.html", {"request": request})
-
 
 @app.post("/register")
 async def register_submit(
     request: Request,
     name: str = Form(...),
     email: str = Form(...),
-    password: str = Form(...),
+    password: str = Form(...)
 ):
     if not name.strip() or not email.strip() or len(password) < 5:
         return templates.TemplateResponse("register.html", {
@@ -93,18 +87,16 @@ async def register_submit(
 
     create_user(name, email, password)
 
-    # Use normal redirect instead of HX-Redirect
+    # Use standard redirect for serverless
     return RedirectResponse("/login?message=Account created! Please log in.", status_code=302)
 
 @app.get("/login")
 async def login_page(request: Request):
     return templates.TemplateResponse("login.html", {"request": request})
 
-
 @app.post("/login")
 async def login_submit(
     request: Request,
-    response: Response,
     email: str = Form(...),
     password: str = Form(...)
 ):
@@ -133,7 +125,6 @@ async def login_submit(
     resp = RedirectResponse("/dashboard", 302)
     resp.set_cookie(COOKIE_NAME, session_token, httponly=True, max_age=86400, path="/", samesite="lax")
     return resp
-
 
 @app.get("/dashboard")
 async def dashboard(request: Request, user=Depends(get_current_user)):
@@ -174,7 +165,6 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
         "is_manager": user["role"] == "manager",
         "is_assigner": user["role"] == "assigner"
     })
-
 
 @app.get("/logout")
 async def logout(request: Request):
