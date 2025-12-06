@@ -3,13 +3,18 @@ from pymongo import MongoClient, ASCENDING
 import bcrypt
 import os
 from datetime import datetime
+import certifi
 
 # ------------------ MongoDB Connection ------------------
 MONGO_URI = os.environ.get("MONGO_URI")  # Make sure this is set in Vercel environment
 if not MONGO_URI:
     raise Exception("MONGO_URI environment variable not set!")
 
-client = MongoClient(MONGO_URI)
+client = MongoClient(
+    MONGO_URI,
+    tls=True,
+    tlsCAFile=certifi.where()
+)
 db = client["system_tracking_fastapi"]
 
 users_col = db["users"]
@@ -56,3 +61,4 @@ def login_user(email: str, password: str):
     except Exception as e:
         print(f"[DB ERROR] login_user: {e}")
     return None
+
