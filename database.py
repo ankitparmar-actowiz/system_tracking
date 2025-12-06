@@ -1,6 +1,6 @@
 # database.py
 from pymongo import MongoClient, ASCENDING
-import bcrypt
+import bcrypt, os
 
 # client = MongoClient("mongodb://localhost:27017/")
 MONGO_URI = os.environ.get("MONGO_URI")
@@ -58,6 +58,7 @@ def login_user(email: str, password: str):
         return {"name": user["name"], "email": user["email"], "role": user["role"]}
 
     return None
+
 
 
 
