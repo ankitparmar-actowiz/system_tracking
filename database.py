@@ -3,7 +3,7 @@ from pymongo import MongoClient, ASCENDING
 import bcrypt
 
 # client = MongoClient("mongodb://localhost:27017/")
-client = MongoClient("mongodb+srv://ankitparmaractowiz_db_user:M3bjZ3RWX2F5ACdd@systemtrackingapp.4egtw8y.mongodb.net/")
+client = MongoClient("MONGO_URI")
 db = client["system_tracking_fastapi"]
 
 users_col = db["users"]
@@ -57,4 +57,5 @@ def login_user(email: str, password: str):
         return {"name": user["name"], "email": user["email"], "role": user["role"]}
 
     return None
+
 
