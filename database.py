@@ -39,13 +39,17 @@ def check_password(password: str, hashed: bytes) -> bool:
 
 def create_user(name: str, email: str, password: str, role="user"):
     hashed = hash_password(password)
-    users_col.insert_one({
-        "name": name,
-        "email": email,
-        "password": hashed,
-        "role": role,
-    })
-
+    try:
+        users_col.insert_one({
+            "name": name,
+            "email": email,
+            "password": hashed,
+            "role": role,
+        })
+        return True
+    except Exception as e:
+        print(f"Error creating user: {e}")
+        return False
 
 def user_exists(email: str):
     return users_col.find_one({"email": email})
@@ -58,6 +62,7 @@ def login_user(email: str, password: str):
         return {"name": user["name"], "email": user["email"], "role": user["role"]}
 
     return None
+
 
 
 
