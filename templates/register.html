@@ -4,6 +4,42 @@
   <meta charset="UTF-8" />
   <title>Register</title>
   <link rel="stylesheet" href="/static/style.css" />
+<style>
+  .password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    /* Nudge emoji slightly upward for better visual alignment */
+    transform: translateY(calc(-50% - 7px));
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 16px;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+  }
+
+  .password-toggle:hover {
+    background-color: #f0f0f0;
+  }
+
+  .password-wrapper {
+    position: relative;
+  }
+
+  .password-input {
+    width: 100%;
+    padding: 8px 32px 8px 10px;
+    box-sizing: border-box;
+  }
+</style>
 </head>
 <body class="login-body">
   <div class="login-container">
@@ -17,14 +53,61 @@
       <div class="success">{{ success }}</div>
     {% endif %}
 
-    <form method="POST">
+    <form method="POST" id="registerForm">
       <input type="text" name="name" placeholder="👤 Full Name" required />
+
       <input type="email" name="email" placeholder="📧 Email Address" required />
-      <input type="password" name="password" placeholder="🔑 Password (min 5)" minlength="5" required />
+
+      <div class="password-wrapper">
+        <input type="password" id="password1" name="password" class="password-input" placeholder="🔑 Password (min 5)" minlength="5" required />
+        <button type="button" class="password-toggle" onclick="togglePassword('password1')">
+          👁️
+        </button>
+      </div>
+
+      <div class="password-wrapper">
+        <input type="password" id="password2" class="password-input" placeholder="✅ Confirm Password" minlength="5" required />
+        <button type="button" class="password-toggle" onclick="togglePassword('password2')">
+          👁️
+        </button>
+      </div>
+
       <button type="submit">🆕 Register</button>
     </form>
 
     <p>Already have an account? <a href="/login">Login here</a></p>
   </div>
+
+  <script>
+    function togglePassword(id) {
+      const input = document.getElementById(id);
+      const button = input.nextElementSibling;
+      if (input.type === "password") {
+        input.type = "text";
+        button.textContent = "🚨";
+      } else {
+        input.type = "password";
+        button.textContent = "👁️";
+      }
+    }
+
+    // Prevent submission if passwords don't match
+    document.getElementById('registerForm').addEventListener('submit', function(e) {
+      const p1 = document.getElementById('password1').value;
+      const p2 = document.getElementById('password2').value;
+
+      if (p1 !== p2) {
+        e.preventDefault();
+        alert("❌ Passwords do not match!");
+        return false;
+      }
+
+      if (p1.length < 5) {
+        e.preventDefault();
+        alert("❌ Password must be at least 5 characters.");
+        return false;
+      }
+    });
+  </script>
 </body>
 </html>
