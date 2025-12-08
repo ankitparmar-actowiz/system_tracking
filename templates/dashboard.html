@@ -54,17 +54,19 @@
           {% if s.status == "free" %}
             <option value="{{ s.ip }} - free">{{ s.ip }} - Free</option>
           {% else %}
+            <!-- ✅ VALUE contains OWNER EMAIL -->
             <option value="{{ s.ip }} - using (Owner: {{ s.owner }})">
-              {{ s.ip }} - Used by {{ s.owner }}
+              {{ s.ip }} - Used by {{ s.owner_name }}
             </option>
           {% endif %}
         {% endfor %}
       </select>
 
-      <select name="user_name" required>
+      <!-- ✅ SEND EMAIL, NOT NAME -->
+      <select name="user_email" required>
         <option value="">Assign To</option>
-        {% for u in normal_users %}
-          <option value="{{ u }}">{{ u }}</option>
+        {% for u in all_users %}  <!-- all_users includes email + name -->
+          <option value="{{ u.email }}">{{ u.name }} ({{ u.email }})</option>
         {% endfor %}
       </select>
 
@@ -132,32 +134,30 @@
 
         {% if a.get('main_released') %}
         <span style="font-style: italic; color:#8d960d;">
-            - Main system is released by {{ a.user }}, contrib remains
+            - Main system is released by {{ a.owner_name }}, contrib remains
         </span>
         {% endif %}
 
         </div>
 
         <div style="margin-left: 10px;">
-          <div>👤 <strong>Main User:</strong> {{ a.user }}</div>
+          <div>👤 <strong>Main User:</strong> {{ a.owner_name }}</div>
           <div>📌 <strong>Project:</strong> {{ a.project }}</div>
           <div>⏱️ <strong>Duration:</strong> {{ a.duration }} hrs</div>
           <div>🕗 <strong>Started:</strong> {{ a.start_time.strftime('%Y-%m-%d %H:%M') }}</div>
         </div>
 
         
-        <!-- CONTRIBUTORS LIST (UPDATED) -->
+        <!-- CONTRIBUTORS LIST -->
         {% if a.contributors %}
         <div style="margin-top:12px; padding:10px; background:#111; border-radius:6px;">
           <strong style="color:#1e88e5;">👥 Contributors:</strong>
 
           {% for c in a.contributors %}
           <div style="margin-left:16px; padding:3px 0;">
-
-            👤 {{ c.contributor }}  
+            👤 {{ c.contributor_name }}  
             | 📌 {{ c.project }}  
             | ⏱️ {{ c.duration }} hrs  
-
           </div>
           {% endfor %}
         </div>
@@ -167,7 +167,8 @@
         <div style="margin-top:10px;">
 
           <!-- MAIN USER RELEASE -->
-          {% if a.user == user.name and not a.get('main_released') %}
+          <!-- ✅ Compare by EMAIL -->
+          {% if a.user == user.email and not a.get('main_released') %}
           <form hx-post="/release/main" hx-swap="none">
             <input type="hidden" name="ip" value="{{ a.ip }}" />
             <button type="submit" style="background:#17a2b8; color:white; padding:6px 12px; border:none; border-radius:4px;">
@@ -178,20 +179,22 @@
 
           <!-- CONTRIBUTOR LEAVE BUTTON -->
           {% for c in a.contributors %}
-          {% if c.contributor == user.name %}
+          <!-- ✅ Compare by EMAIL -->
+          {% if c.contributor == user.email %}
           <form hx-post="/release/contrib" hx-swap="none">
             <input type="hidden" name="main_ip" value="{{ c.main_ip }}">
-            <input type="hidden" name="contributor" value="{{ c.contributor }}">
+            <!-- ⚠️ NO 'contributor' field needed — backend uses session user -->
             <button style="background:#6c757d; color:white; padding:6px 12px; border:none; border-radius:4px;">
-              🔵 Leave Contib System: {{ c.main_ip }} of Project: {{ c.project }}
+              🔵 Leave Contrib System: {{ c.main_ip }} of Project: {{ c.project }}
             </button>
           </form>
           {% endif %}
           {% endfor %}
 
           <!-- NORMAL USER CONTRIBUTION -->
-          {% if user.role == "user" and a.user != user.name %}
+          {% if user.role == "user" and a.user != user.email %}
           <form hx-post="/self/contribute" hx-swap="none" style="margin-top:10px;">
+            <!-- ✅ a.user is EMAIL, so this is correct -->
             <input type="hidden" name="system" value="{{ a.ip }} - using (Owner: {{ a.user }})">
 
             <input type="text" name="project" placeholder="📌 Project Name" required style="margin-bottom:6px;">
@@ -204,15 +207,12 @@
           {% endif %}
 
         </div>
-
-        
       </div>
       {% endfor %}
-      
-      {% else %}
+    {% else %}
       <p>🟢 No systems in use.</p>
-      {% endif %}
-    </section>
+    {% endif %}
+  </section>
 
   <!-- LOGS -->
   <section class="card">
@@ -223,7 +223,7 @@
         {% for log in logs %}
         <tr>
           <td>{{ log.ip }}</td>
-          <td>{{ log.user }}</td>
+          <td>{{ log.user }}</td>  <!-- This is email — consider resolving to name if desired -->
           <td>{{ log.project }}</td>
           <td>{{ log.start_time.strftime('%H:%M') }} ➡️ {{ log.end_time.strftime('%H:%M') if log.end_time else '—' }}</td>
           <td>{% if log.is_contribution %}<i>Contribution</i>{% else %}Main{% endif %}</td>
@@ -240,7 +240,7 @@
 <!-- TOAST -->
 <div id="notification-toast"
   style="position:fixed; top:10px; right:10px; z-index:9999; padding:12px 20px; color:white;
-         border-radius:8px; background:#28a745; opacity:0; transition:opacity .3s; pointer-events:none;">
+          border-radius:8px; background:#28a745; opacity:0; transition:opacity .3s; pointer-events:none;">
 </div>
 
 <script>
