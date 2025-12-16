@@ -4,7 +4,7 @@ import bcrypt
 import os
 import certifi
 
-from time_utils import now_ist
+from time_utils import now_utc
 
 # ------------------ MongoDB Connection ------------------
 MONGO_URI = os.environ.get("MONGO_URI")
@@ -41,7 +41,7 @@ def create_user(name: str, email: str, password: str, role="user"):
             "email": email,
             "password": hashed,
             "role": role,
-            "created_at": now_ist()  # ✅ IST
+            "created_at": now_utc()    
         })
         return True
     except Exception as e:
@@ -67,3 +67,4 @@ def login_user(email: str, password: str):
     except Exception as e:
         print(f"[DB ERROR] login_user: {e}")
     return None
+
