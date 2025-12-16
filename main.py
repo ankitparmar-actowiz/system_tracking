@@ -4,7 +4,8 @@ from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 from fastapi.middleware.cors import CORSMiddleware
-from datetime import datetime, timedelta
+from datetime import timedelta
+from time_utils import now_ist
 import secrets
 import re
 import asyncio
@@ -54,7 +55,7 @@ def get_current_user(request: Request):
     if not token:
         return None
     session = sessions_col.find_one({"session_token": token})
-    if not session or session["expires_at"] < datetime.now():
+    if not session or session["expires_at"] < now_ist():
         return None
     user = users_col.find_one({"email": session["email"]}, {"_id": 0, "password": 0})
     return user if user else None
@@ -139,8 +140,8 @@ async def login_submit(
             "session_token": session_token,
             "email": user["email"],
             "client_ip": client_ip,
-            "created_at": datetime.now(),
-            "expires_at": datetime.now() + timedelta(days=7),
+            "created_at": now_ist(),
+            "expires_at": now_ist() + timedelta(days=7),
         }},
         upsert=True
     )
@@ -171,8 +172,9 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
         a["contributors"] = contribs
         active.append(a)
 
-    today_start = datetime.combine(datetime.today(), datetime.min.time())
-    today_end = datetime.combine(datetime.today(), datetime.max.time())
+    now = now_ist()
+    today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
     logs = list(logs_col.find({"start_time": {"$gte": today_start, "$lte": today_end}}, {"_id": 0}))
 
     normal_users = [u["name"] for u in users_col.find({"role": {"$in": ["user", "assigner"]}}, {"_id": 0, "name": 1})]
@@ -223,7 +225,7 @@ async def book_system(request: Request, ip: str = Form(...), project: str = Form
             "user": user["email"],  # ✅ store email
             "project": project,
             "duration": duration,
-            "start_time": datetime.now(),
+            "start_time": now_ist(),
             "main_released": False
         })
         return htmx_toast_response(f"{ip} booked successfully!", "success")
@@ -260,7 +262,7 @@ async def assign_system(
                 "user": user_email,  # ✅
                 "project": project,
                 "duration": duration,
-                "start_time": datetime.now(),
+                "start_time": now_ist(),
                 "main_released": False
             })
             return htmx_toast_response(f"{ip} assigned to {assigned_user['name']}.", "success")
@@ -280,7 +282,7 @@ async def assign_system(
                 "contributor": user_email,   # ✅
                 "project": project,
                 "duration": duration,
-                "start_time": datetime.now()
+                "start_time": now_ist()
             })
             return htmx_toast_response(f"{assigned_user['name']} added as contributor to {ip}.", "success")
     except Exception as e:
@@ -318,7 +320,7 @@ async def self_contribute(request: Request, system: str = Form(...), project: st
             "contributor": user["email"],  # ✅ store email
             "project": project,
             "duration": duration,
-            "start_time": datetime.now()
+            "start_time": now_ist()
         })
 
         return htmx_toast_response(f"Joined {ip} as contributor!", "success")
@@ -344,7 +346,7 @@ async def release_main(request: Request, ip: str = Form(...)):
         "project": record["project"],
         "duration": record["duration"],
         "start_time": record["start_time"],
-        "end_time": datetime.now(),
+        "end_time": now_ist(),
         "is_contribution": False
     })
 
@@ -376,7 +378,7 @@ async def release_contrib(request: Request, main_ip: str = Form(...)):
             "project": c["project"],
             "duration": c["duration"],
             "start_time": c["start_time"],
-            "end_time": datetime.now(),
+            "end_time": now_ist(),
             "is_contribution": True
         })
         contributors_col.delete_one({"main_ip": main_ip, "contributor": user["email"]})
@@ -430,3 +432,4 @@ async def promote_user(request: Request, email: str = Form(...), role: str = For
         users_col.update_one({"email": email}, {"$set": {"role": role}})
         return htmx_toast_response(f"{email} promoted as {role}!", "success")
     return htmx_toast_response(f"Invalid role for {email}", "error")
+
