@@ -1,12 +1,13 @@
 # database.py
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient
 import bcrypt
 import os
-from datetime import datetime
 import certifi
 
+from time_utils import now_ist
+
 # ------------------ MongoDB Connection ------------------
-MONGO_URI = os.environ.get("MONGO_URI")  # Make sure this is set in Vercel environment
+MONGO_URI = os.environ.get("MONGO_URI")
 if not MONGO_URI:
     raise Exception("MONGO_URI environment variable not set!")
 
@@ -15,6 +16,7 @@ client = MongoClient(
     tls=True,
     tlsCAFile=certifi.where()
 )
+
 db = client["system_tracking_fastapi"]
 
 users_col = db["users"]
@@ -26,10 +28,10 @@ sessions_col = db["sessions"]
 
 # ------------------ Helper Functions ------------------
 def hash_password(password: str) -> bytes:
-    return bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+    return bcrypt.hashpw(password.encode("utf-8"), bcrypt.gensalt())
 
 def check_password(password: str, hashed: bytes) -> bool:
-    return bcrypt.checkpw(password.encode('utf-8'), hashed)
+    return bcrypt.checkpw(password.encode("utf-8"), hashed)
 
 def create_user(name: str, email: str, password: str, role="user"):
     hashed = hash_password(password)
@@ -39,7 +41,7 @@ def create_user(name: str, email: str, password: str, role="user"):
             "email": email,
             "password": hashed,
             "role": role,
-            "created_at": datetime.now()
+            "created_at": now_ist()  # ✅ IST
         })
         return True
     except Exception as e:
@@ -57,8 +59,11 @@ def login_user(email: str, password: str):
     try:
         user = users_col.find_one({"email": email})
         if user and check_password(password, user["password"]):
-            return {"name": user["name"], "email": user["email"], "role": user["role"]}
+            return {
+                "name": user["name"],
+                "email": user["email"],
+                "role": user["role"]
+            }
     except Exception as e:
         print(f"[DB ERROR] login_user: {e}")
     return None
-
