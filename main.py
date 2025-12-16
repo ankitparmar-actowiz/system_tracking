@@ -5,7 +5,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import RedirectResponse, Response as FastAPIResponse
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import timedelta
-from time_utils import now_ist
+from time_utils import now_utc, utc_to_ist
 import secrets
 import re
 import asyncio
@@ -55,7 +55,7 @@ def get_current_user(request: Request):
     if not token:
         return None
     session = sessions_col.find_one({"session_token": token})
-    if not session or session["expires_at"] < now_ist():
+    if not session or session["expires_at"] < now_utc():
         return None
     user = users_col.find_one({"email": session["email"]}, {"_id": 0, "password": 0})
     return user if user else None
@@ -432,4 +432,5 @@ async def promote_user(request: Request, email: str = Form(...), role: str = For
         users_col.update_one({"email": email}, {"$set": {"role": role}})
         return htmx_toast_response(f"{email} promoted as {role}!", "success")
     return htmx_toast_response(f"Invalid role for {email}", "error")
+
 
