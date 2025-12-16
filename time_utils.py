@@ -6,7 +6,7 @@ UTC = timezone.utc
 IST = ZoneInfo("Asia/Kolkata")
 
 def now_utc():
-    return datetime.now(UTC)
+    return datetime.now(UTC).replace(tzinfo=None)
 
 def utc_to_ist(dt: datetime):
     if dt.tzinfo is None:
