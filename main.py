@@ -140,8 +140,8 @@ async def login_submit(
             "session_token": session_token,
             "email": user["email"],
             "client_ip": client_ip,
-            "created_at": now_ist(),
-            "expires_at": now_ist() + timedelta(days=7),
+            "created_at": now_utc(),
+            "expires_at": now_utc() + timedelta(days=7),
         }},
         upsert=True
     )
@@ -172,7 +172,7 @@ async def dashboard(request: Request, user=Depends(get_current_user)):
         a["contributors"] = contribs
         active.append(a)
 
-    now = now_ist()
+    now = now_utc()
     today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
     today_end = now.replace(hour=23, minute=59, second=59, microsecond=999999)
     logs = list(logs_col.find({"start_time": {"$gte": today_start, "$lte": today_end}}, {"_id": 0}))
@@ -225,7 +225,7 @@ async def book_system(request: Request, ip: str = Form(...), project: str = Form
             "user": user["email"],  # ✅ store email
             "project": project,
             "duration": duration,
-            "start_time": now_ist(),
+            "start_time": now_utc(),
             "main_released": False
         })
         return htmx_toast_response(f"{ip} booked successfully!", "success")
@@ -262,7 +262,7 @@ async def assign_system(
                 "user": user_email,  # ✅
                 "project": project,
                 "duration": duration,
-                "start_time": now_ist(),
+                "start_time": now_utc(),
                 "main_released": False
             })
             return htmx_toast_response(f"{ip} assigned to {assigned_user['name']}.", "success")
@@ -282,7 +282,7 @@ async def assign_system(
                 "contributor": user_email,   # ✅
                 "project": project,
                 "duration": duration,
-                "start_time": now_ist()
+                "start_time": now_utc()
             })
             return htmx_toast_response(f"{assigned_user['name']} added as contributor to {ip}.", "success")
     except Exception as e:
@@ -320,7 +320,7 @@ async def self_contribute(request: Request, system: str = Form(...), project: st
             "contributor": user["email"],  # ✅ store email
             "project": project,
             "duration": duration,
-            "start_time": now_ist()
+            "start_time": now_utc()
         })
 
         return htmx_toast_response(f"Joined {ip} as contributor!", "success")
@@ -346,7 +346,7 @@ async def release_main(request: Request, ip: str = Form(...)):
         "project": record["project"],
         "duration": record["duration"],
         "start_time": record["start_time"],
-        "end_time": now_ist(),
+        "end_time": now_utc(),
         "is_contribution": False
     })
 
@@ -378,7 +378,7 @@ async def release_contrib(request: Request, main_ip: str = Form(...)):
             "project": c["project"],
             "duration": c["duration"],
             "start_time": c["start_time"],
-            "end_time": now_ist(),
+            "end_time": now_utc(),
             "is_contribution": True
         })
         contributors_col.delete_one({"main_ip": main_ip, "contributor": user["email"]})
@@ -432,5 +432,6 @@ async def promote_user(request: Request, email: str = Form(...), role: str = For
         users_col.update_one({"email": email}, {"$set": {"role": role}})
         return htmx_toast_response(f"{email} promoted as {role}!", "success")
     return htmx_toast_response(f"Invalid role for {email}", "error")
+
 
 
